@@ -1,0 +1,636 @@
+% !TEX TS-program = xelatex
+% !TEX encoding = UTF-8 Unicode
+\documentclass[UTF-8,aspectratio=1610]{ctexbeamer}
+\usefonttheme[onlymath]{serif}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fontspec}
+\usetheme{Darmstadt}
+\title{分组背包与环形DP}
+\author{Hatsune Miku}
+\subject{动态规划}
+\institute{GRYZ}
+\date{\today}
+\setminted[C++]{autogobble,breaklines,fontsize=\footnotesize,mathescape}
+\setminted[python]{autogobble,breaklines,fontsize=\footnotesize,mathescape}
+\setsansfont{Times New Roman}
+\setCJKsansfont{KaiTi_GB2312}
+\hypersetup{pdfpagemode=FullScreen,colorlinks=true,linkcolor=blue,urlcolor=blue}
+\begin{document}
+\begin{frame}
+\maketitle
+\end{frame}
+\section{关于这节课的一些事情}
+\begin{frame}
+\frametitle{自我介绍}
+\begin{block}{自我介绍}
+\pause
+
+全机房最弱\pause
+
+不会讲课\pause
+
+zxl说不能只让txt同学听懂，skh同学也要听懂\pause
+
+其他同学就……
+\end{block}
+\pause
+\begin{block}{关于我的讲课风格}
+\pause
+很多人吐槽我的讲课风格很差？\pause
+
+可能确实是那样\pause
+
+没办法\pause
+
+毕竟全机房最弱
+\end{block}
+\end{frame}
+\begin{frame}
+\frametitle{关于这节课}
+\begin{block}{关于PPT与讲课的问题}
+\pause
+这节课是我草草准备了两三天的产物，PPT也非常丑。\pause
+
+这节课还是比较有难度的，我可能讲着讲着就讲不下去了。\pause
+
+凉了凉了，不讲了（逃
+\end{block}
+\pause
+\begin{block}{主要内容}
+\pause
+据说在座各位水平很高，尤其是txt和skh同学，水平已经吊打我了？\pause
+
+（我还是不讲了吧，毕竟你们都会了\pause
+还是要讲一讲的。课主要分两个部分，其实都是之前的dalao讲过的内容：\pause
+\begin{enumerate}
+\item{分组背包}
+\item{环形DP}
+\end{enumerate}
+\end{block}
+\end{frame}
+\section{前置知识}
+\begin{frame}
+\frametitle{前置知识}
+很多人说，我的课要求前置知识太多，讲着讲着就讲到别的地方去了。\pause
+
+那是你前置知识没学好啊喂！\pause
+
+先说一下前置知识，都是以前学过的东西：\pause
+\begin{enumerate}[<+->]
+\item{搜索}
+\begin{itemize}
+\item{DFS}
+\item{BFS}
+\item{*记忆化搜索}
+\end{itemize}
+\item{DP}
+\begin{itemize}
+\item{DP的基本知识}
+\item{背包}
+\begin{itemize}
+\item{01背包}
+\item{完全背包}
+\item{多重背包}
+\item{混合背包}
+\end{itemize}
+\item{其他DP类型}
+\begin{itemize}
+\item{序列型DP}
+\item{区间DP}
+\end{itemize}
+\end{itemize}
+\end{enumerate}
+\end{frame}
+\begin{frame}
+\frametitle{啥？}
+妈妈妈妈，我要回家。\pause
+
+垃圾竞赛，费我时间，耗我钱财，拿不到一等奖，照样完蛋！\pause
+
+别怕qwq，之前不是讲过吗？\pause
+
+我就假装你们都会了这些东西
+\end{frame}
+\section{分组背包问题}
+\begin{frame}
+\frametitle{简单介绍}
+这一部分，我将会用5道左右的例题来介绍分组背包这一类问题的基本解法。题目难度不定，有些可能还需要一些技巧才能完成。\pause
+
+首先让我们看看什么是分组背包，形式的定义一下分组背包：\pause
+\begin{alertblock}{分组背包的定义}
+给你若干个物品，这些物品可以分为若干组，每件物品都有一个体积和价值，你有一个背包，背包有一定容量，规定每一组物品只能选择一件（若干件也可以），问能获得的最大价值是多少。
+\end{alertblock}\pause
+啊，这简单……就加一层枚举物品所属的组就行了。\pause
+
+回答正确。\pause
+
+但，\pause
+问题真的这么简单吗？
+\end{frame}
+\begin{frame}[fragile]
+\frametitle{两份代码}
+我们假设，每组物品只能选一件（01背包），给出两份代码，请指出哪一份代码是正确的：\pause
+\begin{exampleblock}{代码1}
+\begin{minted}{python}
+for each group k:
+    for j in backpack.size to 0:
+        for each element i in group k:
+            f[j]=max{f[j],f[j-c[i]]+w[i]}
+\end{minted}
+\end{exampleblock}\pause
+\begin{exampleblock}{代码2}
+\begin{minted}{python}
+for each group k:
+    for each element i in group k:
+        for j in backpack.size to 0:
+            f[j]=max{f[j],f[j-c[i]]+w[i]}
+\end{minted}
+\end{exampleblock}
+\end{frame}
+\begin{frame}
+\frametitle{思考一下}
+\pause
+\begin{exampleblock}{答案}
+上一张PPT中代码1是正确的。
+\end{exampleblock}
+\pause
+\begin{alertblock}{为什么？}
+思考一下代码1的含义，本身是在背包容量一定的前提下，枚举每一组的每一个物品；代码2则调换了枚举物品和枚举背包体积的顺序，先枚举每一件物品，然后枚举背包体积，有什么发现？\pause
+
+显然代码1保证了在背包容量一定的前提下，每一个容量对应一个最优解。代码2则是保证了每一件物品的体积一定的前提下，每一个容量对应一个最优解。\pause
+
+明白了吗？就是说，代码1保证每个背包容量只能对应选择1件物品，而代码2不能保证在每一组物品只选择1件，不符合分组背包的定义，这就凉了。\pause
+
+当然你也可以套上其他的背包模板，使这个简单的分组01背包变得复杂一些。
+\end{alertblock}
+\end{frame}
+\section{例题}
+\begin{frame}
+\frametitle{几个题目}
+让我们来看几道例题巩固一下：
+\begin{itemize}
+\item{\href{https://www.luogu.org/problemnew/show?pid=1757}{洛谷P1757 通天之分组背包}}
+\item{\href{http://acm.hdu.edu.cn/showproblem.php?pid=1712}{HDU 1712 ACboy needs your help}}
+\item{\href{http://poj.org/problem?id=3046}{POJ 3046 Ant Counting}}
+\item{\href{http://acm.hdu.edu.cn/showproblem.php?pid=4341}{HDU 4341 Gold Miner}}
+\item{\href{http://acm.hdu.edu.cn/showproblem.php?pid=3033}{HDU 3033 I love sneakers!}}
+\end{itemize}
+\pause
+不要问我为什么HDU的题目占了大多数，因为我实在是找不到分组背包的题目。\pause
+
+dalao们肯定都已经AK了。请几位同学上来讲一讲？
+\end{frame}
+\begin{frame}
+\frametitle{dalao讲题时间}
+\end{frame}
+\begin{frame}
+\frametitle{洛谷P1757 通天之分组背包}
+\begin{block}{题目描述}
+自01背包问世之后，小A对此深感兴趣。一天，小A去远游，却发现他的背包不同于01背包，他的物品大致可分为k组，每组中的物品相互冲突，现在，他想知道最大的利用价值是多少。
+\end{block}
+\begin{alertblock}{输入格式}
+两个数$m$, $n$，表示一共有$n$件物品，总重量为$m$
+
+接下来$n$行，每行$3$个数$a_i,b_i,c_i$，表示第$i$件物品的重量，利用价值，所属组数
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+一个数，最大的利用价值
+
+$1\leqslant m\leqslant 1000,1\leqslant n\leqslant 1000$，组数$t\leqslant 100$
+\end{exampleblock}
+\end{frame}
+\begin{frame}[fragile]
+分组背包模板题。\pause
+上代码？\pause
+\begin{minted}{C++}
+#include<cstdio>
+#include<algorithm>
+using namespace std;
+int f[1005],ai[105][1000],ci[1005],wi[1005];
+int main(){
+    scanf("%d%d",&m,&n);
+    for(int i=1; i<=n; i++){
+        scanf("%d%d%d",&wi[i],&ci[i],&j);
+        ai[j][++ai[j][0]]=i;
+    }
+    for(int i=1; ai[i][0]!=0&&i<=100; i++)
+        for(int j=m; j>=1; j--)
+            for(int t=1; t<=ai[i][0]; t++)
+                if(j>=wi[ai[i][t]])
+                    f[j]=max(f[j],f[j-wi[ai[i][t]]]+ci[ai[i][t]]);
+    printf("%d\n",f[m]);
+    return 0;
+}
+\end{minted}
+\end{frame}
+\begin{frame}
+\frametitle{HDU 1712 ACboy needs your help}
+\begin{block}{题目描述}
+ACboy这个学期有$N$门课要学习，他计划最多学习$M$天，每门课的学习效果与他的学习时长有关。如何安排才能使学习效果最好？
+\end{block}
+\begin{alertblock}{输入格式}
+多组测试数据，每组测试数据由两个正整数$N,M$组成，接下来是一个矩阵$A[i][j]$，$A[i][j]$表示如果ACboy在第$i$门课上花费$j$天会获得的学习效果。
+
+$N=0,M=0$结束输入。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+对于每组数据，输出一行表示ACboy获得的最大学习效果。
+
+$1\leqslant N,M\leqslant 100$
+\end{exampleblock}
+\end{frame}
+\begin{frame}
+还是分组背包的裸题。\pause
+
+或者可以按照泛化物品来做（太明显了）。\pause
+
+这样我们大概就顺便得到泛化物品的做法了。\pause
+
+什么，你不知道什么是泛化物品？\pause
+
+\begin{alertblock}{泛化物品的定义}
+在背包问题中，物品没有一定的体积及对应的价值，而是价值随分配给它的体积变化而变化，这样的物品叫做泛化物品。
+
+更严格的定义，在背包容量为$V$的背包问题中，泛化物品是一个定义域为$\mathbf{N_+}$中的函数$h$，当分配给它的费用为$v$时，能得到的价值就是$h(v)$。
+\end{alertblock}\pause
+
+体会一下这两种背包问题之间的关系。\pause
+
+触类旁通，泛化物品也能做了。是不是感觉自己很棒棒啊？
+\end{frame}
+\begin{frame}
+\frametitle{POJ 3046 Ant Counting}
+\begin{block}{题意}
+有$T$个蚂蚁家族，编号$1$～$T$，每个家族中蚂蚁有$N[i]$只。用这些蚂蚁家族中的蚂蚁组成一个蚂蚁序列，问长度在$S$～$B$之间的不同蚂蚁序列有多少种。
+
+$1\leqslant T,N[i]\leqslant 100$
+\end{block}
+\pause
+\begin{alertblock}{怎么有些不一样？}
+开始有些难度了？不是模板题了？只能枚举子集了？没有思路了？考虑几分钟？
+\end{alertblock}
+\pause
+\begin{exampleblock}{题解}
+我们把每个蚂蚁家族看做一个分组，每一只蚂蚁看做一个物品，在每个分组里有$N[i]$种选择，每种选择对答案的贡献为1。然后就是分组背包了。\pause
+
+最后，根据题意，答案等于所有长度在区间$[S,B]$的蚂蚁序列的种类数的和，即$ans=\sum_{i=s}^bdp[i]$。\pause
+
+是不是很简单？
+\end{exampleblock}
+\end{frame}
+\begin{frame}
+\frametitle{HDU 3033 I love sneakers!}
+\begin{block}{题意}
+Iserlohn喜欢收集鞋子。他一共有$M$块钱，一共有$N$种鞋子，分别属于$K$个牌子，第$i$双鞋子是$a_i$牌子的，标价为$b_i$，第$i$双鞋子都有一个价值$c_i$。他希望每个牌子的鞋子至少买一双，并且一双鞋不会买两次。问他能获得的最大价值是多少。
+
+$1\leqslant N\leqslant 100,1\leqslant M\leqslant10000,1\leqslant K\leqslant10,1\leqslant a\leqslant K,0\leqslant b,c<100000$
+\end{block}
+\pause
+\begin{alertblock}{怎么又不一样了？}
+每组物品中至少要选一个，这怎么做啊？
+\pause
+考虑特殊标记一下不符合题意的状态？
+\end{alertblock}
+\pause
+\begin{exampleblock}{题解}
+我们把DP数组初始化成$-1$表示不合法，转移的时候只从合法的状态转移。\pause
+
+对于DP数组的第$0$行，为了能够计算第$1$行，不能初始化为$-1$，很明显应该初始化为$0$。否则连初始状态都无法转移过去，那就凉了。\pause
+
+剩下的就是个普通的分组背包。
+\end{exampleblock}
+\end{frame}
+\section{环形DP}
+\begin{frame}
+\frametitle{简单介绍}
+这一部分，我还是会用5道左右的例题来介绍环形DP这一类问题的基本解法。题目难度还是不定，有些题目需要一些技巧（不是裸的环形DP）才能完成。\pause
+
+与背包问题不同的是，环形DP这一类问题没有什么固定的套路，也就是说\pause
+你的DP方程得手推了。\pause
+
+惨啊。\pause
+但是，还是有一定套路可循的。基本思想是拆环成链。就是把环上的DP问题转化为序列上的DP问题。
+
+我们还是先形式化的给环形DP一个定义：\pause
+\begin{alertblock}{环形DP的定义}
+环形DP本身是序列型DP的一个特例，其特点是DP的对象是一个环，而不是一个序列。其基本思想就是\textcolor{red}{拆环成链}。
+\end{alertblock}
+\end{frame}
+\begin{frame}
+\frametitle{什么是拆环成链？}
+所谓拆环成链，就是把一个环拆成一条链。（相当于啥也没说）\pause
+
+具体做法？dalao来说一下？\pause
+
+其实就是把一个环从某一个点切一刀，断成一条链，然后把这条链复制一次。\pause
+
+\begin{alertblock}{听起来很靠谱的样子，有什么问题吗？}
+\pause
+注意范围啊亲，DP的时候不要枚举超过这个环的长度的区间。\pause
+
+还要注意空间啊，如果复制这条链会MLE的话，就枚举每一个点，从每一个点切一刀，然后做一遍DP，最后从这些DP的结果中取一个最优。
+\end{alertblock}\pause
+所以事实上我们有两种拆环成链的方式，这两种方式互有长短，要视情况使用。\pause
+
+事实上并没有什么新东西对吧，还是普通的序列型DP和区间DP。\pause
+
+那还要你讲什么？\pause
+
+实际上，环形DP实现起来还是有很多细节需要注意的。
+\end{frame}
+\section{例题}
+\begin{frame}
+\frametitle{几个题目}
+让我们来看几道例题巩固一下：
+\begin{itemize}
+\item{\href{https://www.luogu.org/problemnew/show/P1880}{洛谷P1043 [NOIp2003普及组第二题]数字游戏}}
+\item{\href{https://www.luogu.org/problemnew/show/P1880}{洛谷P1880 [NOI1995第二题]石子合并}}
+\item{\href{https://www.luogu.org/problemnew/show/P1063}{洛谷P1063 [NOIp2006提高组第一题]能量项链}}
+\item{\href{https://www.vijos.org/p/1451}{Vijos 1451圆环取数}}
+\item{\href{https://www.luogu.org/problemnew/show/P1070}{洛谷P1070 [NOIp2009普及组第四题]道路游戏}}
+\end{itemize}\pause
+这次画风比较正常。\pause
+
+dalao们肯定都已经AK了。请几位同学上来讲一讲？
+\end{frame}
+\begin{frame}
+\frametitle{dalao讲题时间}
+\end{frame}
+\begin{frame}
+\frametitle{洛谷P1043 [NOIp2003普及组第二题]数字游戏}
+\begin{block}{题目描述}
+丁丁正在玩一个游戏。游戏是这样的：在你面前有一圈整数(一共$N$个)，你要按顺序将其分为$M$个部分，各部分内的数字相加，相加所得的$M$个结果对$10$取模后再相乘，最终得到一个数$k$。游戏的要求是使你所得的$k$最大或者最小。
+
+特别值得注意的是，无论是负数还是正数，对$10$取模的结果均为非负值。请你编写程序帮他赢得这个游戏。
+\end{block}
+\begin{alertblock}{输入格式}
+输入文件第一行有两个整数，$n$（$1\leqslant n\leqslant 50$）和$m$（$1\leqslant m\leqslant 9$）。以下$n$行每行有个整数，其绝对值不大于$10^4$，按顺序给出圈中的数字，首尾相接。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+输出有两行，各包含一个非负整数。第一行是你程序得到的最小值，第二行是最大值。
+\end{exampleblock}
+\end{frame}
+\begin{frame}[fragile]
+环形DP裸题。\pause
+看看代码？\pause
+\begin{minted}{C++}
+#include<bits/stdc++.h> 
+using namespace std;
+int n,m,a[55*2],s[55*2],f[55*2][55*2][12],g[55*2][55*2][12],mx=-1e9,mn=1e9;
+inline int sum(int i,int j) {return (s[j]-s[i-1]+10)%10;}
+int main() {scanf("%d%d",&n,&m);
+    for(int i=1; i<=n; i++) scanf("%d",&a[i]),a[i+n]=a[i]=(a[i]%10+10)%10;
+    for(int i=1; i<=n*2; i++)
+        s[i]=(s[i-1]+a[i]+10)%10,f[i][i][1]=g[i][i][1]=(a[i]+10)%10;
+    for(int i=1; i<=n*2; i++) for(int j=i+1; j<=n*2&&j<=i+n-1; j++){
+            f[i][j][1]=g[i][j][1]=sum(i,j);
+            if(j-i+1==n&&m==1) mx=max(mx,f[i][j][1]),mn=min(mn,g[i][j][1]);
+            for(int k=2; k<=min(m,j-i+1); k++) {f[i][j][k]=-1e9,g[i][j][k]=1e9;
+                for(int t=1; t<=j-i; t++)
+                    f[i][j][k]=max(f[i][j][k],f[i][j-t][k-1]*sum(j-t+1,j)),
+                    g[i][j][k]=min(g[i][j][k],g[i][j-t][k-1]*sum(j-t+1,j));
+                if(j-i+1==n&&k==m) mx=max(mx,f[i][j][k]),mn=min(mn,g[i][j][k]);
+            }
+        }
+    printf("%d\n%d",mn,mx);
+    return 0;
+}
+\end{minted}
+\end{frame}
+\begin{frame}
+\frametitle{洛谷P1880 [NOI1995 第二题] 石子合并}
+\begin{block}{题目描述}
+在一个圆形操场的四周摆放$N$堆石子，现要将石子有次序地合并成一堆。规定每次只能选相邻的$2$堆合并成新的一堆，并将新的一堆的石子数，记为该次合并的得分。
+
+试设计出$1$个算法，计算出将$N$堆石子合并成$1$堆的最小得分和最大得分。
+\end{block}
+\begin{alertblock}{输入格式}
+第$1$行是正整数$N$，表示有$N$堆石子。第$2$行有$N$个数,分别表示每堆石子的个数。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+输出共$2$行,第$1$行为最小得分,第$2$行为最大得分。
+\end{exampleblock}
+\pause
+\begin{alertblock}{题解}
+还是套路，拆环成链后求前缀和，然后枚举断点$k$，剩下的就是普通的区间DP了。
+\end{alertblock}
+\end{frame}
+\begin{frame}
+\frametitle{洛谷P1063 [NOIp2006 提高组第一题] 能量项链}
+\begin{block}{题目描述}
+给你一串有$N$颗能量珠的项链，每颗能量珠都有一个头标记和尾标记和一个能量值，相邻的两颗能量珠可以聚合，如果前一颗能量珠的头标记为$m$，尾标记为$r$，后一颗能量珠的头标记为$r$，尾标记为$n$，则聚合后释放的能量为$m\times r\times n$，新产生的珠子的头标记为$m$，尾标记为$n$。设计一个聚合顺序，使项链释放的能量最大。
+\end{block}
+\begin{alertblock}{输入格式}
+第一行是一个正整数$N$（$4\leqslant N\leqslant 100$），表示项链上珠子的个数。第二行是$N$个用空格隔开的正整数，所有的数均不超过$1000$。第$i$个数为第$i$颗珠子的头标记（$1\leqslant i\leqslant N$），当$1\leqslant i<N$时，第$i$颗珠子的尾标记应该等于第$i+1$颗珠子的头标记。第$N$颗珠子的尾标记应该等于第$1$颗珠子的头标记。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+只有一行，是一个正整数E（$E\leqslant 2.1\times 10^9$），为一个最优聚合顺序所释放的总能量。
+\end{exampleblock}
+\end{frame}
+\begin{frame}[fragile]
+环形DP裸题。\pause
+
+代码？\pause
+\begin{minted}{C++}
+#include<bits/stdc++.h>
+using namespace std;
+int n,e[300],s[300][300],maxn=-1;
+int main(){
+    cin>>n;
+    for(int i=1;i<=n;i++){cin>>e[i];e[i+n]=e[i];}
+    for(int i=2;i<2*n;i++){
+        for(int j=i-1;i-j<n&&j>=1;j--){
+            for(int k=j;k<i;k++)
+            s[j][i]=max(s[j][i],s[j][k]+s[k+1][i]+e[j]*e[k+1]*e[i+1]);  
+            if(s[j][i]>maxn)maxn=s[j][i];
+        }
+    } 
+    cout<<maxn;
+    return 0;
+}
+\end{minted}
+\end{frame}
+\begin{frame}
+\frametitle{Vijos 1451 圆环取数}
+\begin{block}{题目描述}
+给一个被划分为$n$个格子的圆环，每个格子上有一个正整数。两个格子的距离为两个格子之间的格子数。环的圆心处固定有一个指针，开始指向了圆环上的某个格子。可以取下指针所指的那个格子里的数和与这个格子距离不大于$k$的格子的数，取一个数的代价即这个数的值。指针是可以转动的，每次转动可以将指针转向其相邻的格子，代价为圆环上剩下的数的最大值。求将所有数取完所有数的最小代价。
+\end{block}
+\begin{alertblock}{输入格式}
+输入的第$1$行有两个正整数$n$和$k$，描述了圆环上的格子数与取数的范围。
+
+第$2$行有$n$个正整数，按顺时针方向描述了圆环上每个格子上的数，且指针一开始指向了第$1$个数字所在的格子。所有整数之间用一个空格隔开，且不超过$10000$。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+输出仅包括$1$个整数，为取完所有数的最小代价。
+\end{exampleblock}
+\end{frame}
+\begin{frame}[fragile]
+环形DP+RMQ问题。题目中要求一个区间的最大值，那就要写RMQ了。\pause
+
+什么？不知道什么是RMQ问题？啊，就是区间最大值或区间最小值问题。不带修改的话，ST表就行了。\pause
+
+不会的可以去学习一下，主要运用了倍增的思想（这种思想在OI里很常见）。代码：\pause
+\begin{minted}{C++}
+void initRMQ(int n){//n表示序列的长度
+    for(int i=1; i<=n; i++) mx[i][0]=a[i];
+    for(int j=1; j<=12; j++)
+        for(int i=1; i+(1<<j)-1<=n; i++)
+            mx[i][j]=max(mx[i][j-1],mx[i+(1<<(j-1))][j-1]);
+}
+int RMQ(int l,int r){//查询区间$[l,r]$的RMQ 
+    if(l>r) return 0;
+    int k=log(r-l+1)/log(2);
+    return max(mx[l][k],mx[r-(1<<k)+1][k]);
+}
+\end{minted}
+\pause
+
+先使用\verb+initRMQ(n)+初始化，然后查询只需要调用\verb+RMQ(L,R)+即可，预处理的时间复杂度是$O(n\log n)$，查询是$O(1)$。
+
+解决这个问题之后就没什么问题了。剩下的就是一个正常的环形DP了。
+\end{frame}
+\begin{frame}
+\frametitle{洛谷P1070 [NOIp2009 普及组第四题] 道路游戏}
+\begin{block}{题目描述}
+小新正在玩一个简单的电脑游戏。
+
+游戏中有一条环形马路，马路上有$n$个机器人工厂，两个相邻机器人工厂之间由一小段马路连接。小新以某个机器人工厂为起点，按顺时针顺序依次将这$n$个机器人工厂编号为$1$～$n$，因为马路是环形的，所以第$n$个机器人工厂和第$1$个机器人工厂是由一段马路连接在一起的。小新将连接机器人工厂的这$n$段马路也编号为$1$～$n$，并规定第$i$段马路连接第$i$个机器人工厂和第$i+1$个机器人工厂（$1\leqslant i\leqslant n-1$），第$n$段马路连接第$n$个机器人工厂和第$1$个机器人工厂。
+
+游戏过程中，每个单位时间内，每段马路上都会出现一些金币，金币的数量会随着时间发生变化，即不同单位时间内同一段马路上出现的金币数量可能是不同的。小新需要机器人的帮助才能收集到马路上的金币。所需的机器人必须在机器人工厂用一些金币来购买，机器人一旦被购买，便会沿着环形马路按顺时针方向一直行走，在每个单位时间内行走一次，即从当前所在的机器人工厂到达相邻的下一个机器人工厂，并将经过的马路上的所有金币收集给小新，例如，小新在$i$（$1\leqslant i\leqslant n$）号机器人工厂购买了一个机器人，这个机器人会从$i$号机器人工厂开始，顺时针在马路上
+\end{block}
+\end{frame}
+\begin{frame}
+\begin{block}{题目描述}
+行走，第一次行走会经过$i$号马路，到达$i+1$号机器人工厂（如果$i=n$，机器人会到达第$1$个机器人工厂），并将$i$号马路上的所有金币收集给小新。 游戏中，环形马路上不能同时存在$2$个或者$2$个以上的机器人，并且每个机器人最多能够在环形马路上行走$p$次。小新购买机器人的同时，需要给这个机器人设定行走次数，行走次数可以为$1$～$p$之间的任意整数。当马路上的机器人行走完规定的次数之后会自动消失，小新必须立刻在任意一个机器人工厂中购买一个新的机器人，并给新的机器人设定新的行走次数。以下是游戏的一些补充说明：
+\begin{enumerate}
+\item{游戏从小新第一次购买机器人开始计时。}
+\item{购买机器人和设定机器人的行走次数是瞬间完成的，不需要花费时间。}
+\item{购买机器人和机器人行走是两个独立的过程，机器人行走时不能购买机器人，购买完机器人并且设定机器人行走次数之后机器人才能行走。}
+\item{在同一个机器人工厂购买机器人的花费是相同的，但是在不同机器人工厂购买机器人的花费不一定相同。}
+\end{enumerate}
+购买机器人花费的金币，在游戏结束时再从小新收集的金币中扣除，所以在游戏过
+\end{block}
+\end{frame}
+\begin{frame}
+\begin{block}{题目描述}
+程中小新不用担心因金币不足，无法购买机器人而导致游戏无法进行。也因为如此，游戏结束后，收集的金币数量可能为负。现在已知每段马路上每个单位时间内出现的金币数量和在每个机器人工厂购买机器人需要的花费，请你告诉小新，经过$m$个单位时间后，扣除购买机器人的花费，小新最多能收集到多少金币。
+\end{block}
+\begin{alertblock}{输入格式}
+第一行$3$个正整数，$n，m，p$，意义如题目所述。
+
+接下来的$n$行，每行有$m$个正整数，每两个整数之间用一个空格隔开，其中第$i$行描述了$i$号马路上每个单位时间内出现的金币数量（$1\leqslant$金币数量$\leqslant 100$），即第$i$行的第$j$（$1\leqslant j\leqslant m$）个数表示第$j$个单位时间内$i$号马路上出现的金币数量。
+
+最后一行，有$n$个整数，每两个整数之间用一个空格隔开，其中第$i$个数表示在$i$号机器人工厂购买机器人需要花费的金币数量（$1\leqslant$金币数量$\leqslant 100$）。
+\end{alertblock}
+\begin{exampleblock}{输出格式}
+$1$个整数表示在$m$个单位时间内扣除购买机器人花费金币最多能收集到的金币数。
+\end{exampleblock}
+\end{frame}
+\begin{frame}
+\begin{exampleblock}{吐槽}
+\pause
+这道题目这么长，并且难得要命？
+\pause
+dalao上来讲讲思路？
+\end{exampleblock}
+\pause
+\begin{alertblock}{pre题解}
+\pause
+我们很容易设计出状态$f[i]$表示时间$i$可以获得的最大金钱。
+\pause
+DP的一贯套路。
+\pause
+
+然后呢？我们考虑需要枚举什么。
+\pause
+时间$i$，到达的城市$j$和这一步走的步数$k$。
+\pause
+题目中给出来了，为什么不用？
+\pause
+
+推一下状态转移方程？
+\pause
+
+我们令$cost[i]$表示第$i$个工厂机器人的雇佣费用，$r[j][i]$表示第$i$个时刻到达第$j$个工厂的价值，$sum[i][j]$表示价值的前缀和。
+\pause
+
+考虑到一个事实，我们要在一个环上进行DP，如何才能方便地转移？
+\pause
+
+显然可以用将第一个城市编号为$0$，然后将$i$对$n$取模的方式做到将第$n$转移到第$1$个城市。
+\pause
+
+对于价值，由于存在两个时间和金钱两个约束，我们需要进行一次二维前缀和。
+\pause
+
+就是说，$sum$值沿对角线传递。
+\end{alertblock}
+\end{frame}
+\begin{frame}
+\begin{exampleblock}{$O(n^3)$题解}
+\pause
+预处理完这些数组以后，我们可以得到以下状态转移方程：
+\pause
+\begin{equation*}
+f[i]=\max\{f[i-k]+sum[i][j]−sum[i-k][j-k]−cost[j−k]\}
+\end{equation*}
+\pause
+需要解释一下吗？
+\pause
+
+因为我们要求出在时刻$i$走到第$j$个工厂的最大价值，我们就要知道第$j-k$个工厂的最大价值，即$f[j-k]$；然后加上这$j-k$步的经过工厂的价值，由于是预处理的前缀和数组，我们可以得到$j-k$步经过工厂的价值实际上是时间区间$[0,i]$与时间区间$[0,i-k]$从第$j-k$个工厂走到第$i$个工厂价值的差，再减掉雇佣第$j-k$号工厂机器人的费用。
+\pause
+
+然后依次枚举$i,j,k$就行了，可以拿到$90$分的好成绩。
+\pause
+
+是不是感觉自己很棒棒啊？
+\end{exampleblock}
+\end{frame}
+\begin{frame}
+\begin{alertblock}{优化}
+\pause
+我们对刚才的DP方程稍加处理，把不需要枚举$k$的一项提取出来？
+\pause
+\begin{equation*}
+f[i]=max(f[i−k]−sum[i-k][j-k]−cost[j−k])+sum[i][j]
+\end{equation*}
+\pause
+注意到在转移过程中$i$和$j$都用到了$k$这个不变量，我们令$g[i][j]=f[i]−sum[i][j]$ $−cost[j]$，状态转移方程可以转化为以下形式：
+\pause
+\begin{equation*}
+f[i]=max(g[i-k][j-k])+sum[i][j]
+\end{equation*}
+\pause
+就是对$g$数组的一条对角线求个最大值，然后加上价值的前缀和。
+\pause
+
+所以我们可以先预处理出$g$数组，直接把这个数组同一条对角线上的值扔到一个优先队列里去。然后只需要枚举$i,j$就能$O(1)$转移了。
+\pause
+
+总的时间复杂度$O(n^2\log n)$，可以通过全部的数据。
+\pause
+
+也可以用单调队列优化。一样的道理，注意到所求区间为长度为$k$的滑动区间。\pause
+
+滑动窗口问题？\pause
+
+所以预处理完了之后扔到$n$个单调队列里，时间复杂度可以降低为$O(n^2)$。
+\end{alertblock}
+\end{frame}
+\section{致谢}
+\begin{frame}
+\begin{exampleblock}{\vspace{8pt}\begin{center}\Huge{谢谢}\vspace{8pt}\end{center}}
+\vspace{8pt}
+\pause
+\begin{block}{提问时间}
+有什么问题吗？
+\end{block}
+\pause
+作业：完成今天讲的十道例题。
+\vspace{8pt}
+\end{exampleblock}
+\end{frame}
+\end{document}
